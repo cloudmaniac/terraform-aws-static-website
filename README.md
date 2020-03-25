@@ -5,3 +5,4 @@ This Terraform plan will create a static website on AWS using the following serv
 - AWS Certificate Manager
 - S3
 - CloudFront
+- Lambda
