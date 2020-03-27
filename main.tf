@@ -1,3 +1,21 @@
+## Providers definition
+# Default provider
+provider "aws" {
+  version                 = "~> 2.0"
+  region                  = var.aws-region-default
+  shared_credentials_file = "../.aws/credentials"
+  profile                 = "romain"
+}
+
+# Additional provider specific to handle ACM in a CloudFront context
+provider "aws" {
+  alias                   = "us-east-1"
+  version                 = "~> 2.0"
+  region                  = "us-east-1"
+  shared_credentials_file = "../.aws/credentials"
+  profile                 = "romain"
+}
+
 ## Route 53
 # Provides details about the zone
 data "aws_route53_zone" "main" {
@@ -272,7 +290,7 @@ resource "aws_cloudfront_distribution" "website_cdn_redirect" {
 
   logging_config {
     bucket = aws_s3_bucket.website_logs.bucket_domain_name
-    prefix = "${var.website-domain-main}-redirect/"
+    prefix = "${var.website-domain-redirect}/"
   }
 
   default_cache_behavior {
@@ -360,11 +378,17 @@ resource "aws_iam_role" "lambda_exec_role_cloudfront_redirect" {
   }
 }
 
+# Attach the predefined AWSLambdaBasicExecutionRole to grant permission to the Lambda execution role to see the CloudWatch logs generated when CloudFront triggers the function.
+resource "aws_iam_role_policy_attachment" "lambda_exec_role_cloudwatch_policy" {
+  role       = aws_iam_role.lambda_exec_role_cloudfront_redirect.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
 # Generates a ZIP archive from the Javascript script
 data "archive_file" "cloudfront_folder_index_redirect_code" {
   type        = "zip"
-  source_file = "lambda/cloudfront_folder_index_redirect.js"
-  output_path = "lambda/cloudfront_folder_index_redirect.js.zip"
+  source_file = "${path.module}/lambda/cloudfront_folder_index_redirect.js"
+  output_path = "${path.module}/lambda/cloudfront_folder_index_redirect.js.zip"
 }
 
 # Creates the Lambda Function
