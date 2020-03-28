@@ -1,13 +1,7 @@
 ## Providers definition
-# Default provider
-provider "aws" {
-  version                 = "~> 2.0"
-  region                  = var.aws-region-default
-  shared_credentials_file = "../.aws/credentials"
-  profile                 = "romain"
-}
+# Default provider will be inherited from the enclosing configuration.
 
-# Additional provider specific to handle ACM in a CloudFront context
+# The provider below is required to handle ACM and Lambda in a CloudFront context
 provider "aws" {
   alias                   = "us-east-1"
   version                 = "~> 2.0"
