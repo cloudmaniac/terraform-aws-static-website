@@ -1,5 +1,5 @@
 ## Providers definition
-# Default provider will be inherited from the enclosing configuration.
+# Default provider will be inherited from the enclosing configuration
 
 # The provider below is required to handle ACM and Lambda in a CloudFront context
 provider "aws" {
