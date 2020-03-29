@@ -1,9 +1,3 @@
-variable "aws-region-default" {
-  description = "Default AWS region to build required resources."
-  default     = "us-east-1"
-  type        = string
-}
-
 variable "website-domain-main" {
   description = "Main website domain, e.g. cloudmaniac.net"
   type        = string
