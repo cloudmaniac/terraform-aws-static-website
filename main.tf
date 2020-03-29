@@ -151,7 +151,7 @@ resource "aws_cloudfront_distribution" "website_cdn_root" {
 
   origin {
     origin_id   = "origin-bucket-${aws_s3_bucket.website_root.id}"
-    domain_name = "${var.website-domain-main}-root.s3.${var.aws-region-default}.amazonaws.com"
+    domain_name = aws_s3_bucket.website_root.bucket_regional_domain_name
 
     s3_origin_config {
       origin_access_identity = aws_cloudfront_origin_access_identity.origin_access_identity_website.cloudfront_access_identity_path
@@ -271,7 +271,7 @@ resource "aws_cloudfront_distribution" "website_cdn_redirect" {
 
   origin {
     origin_id   = "origin-bucket-${aws_s3_bucket.website_redirect.id}"
-    domain_name = "${var.website-domain-main}-redirect.s3.${var.aws-region-default}.amazonaws.com"
+    domain_name = aws_s3_bucket.website_redirect.bucket_regional_domain_name
 
     s3_origin_config {
       origin_access_identity = aws_cloudfront_origin_access_identity.origin_access_identity_website.cloudfront_access_identity_path
