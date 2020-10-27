@@ -138,11 +138,6 @@ resource "aws_s3_bucket" "website_redirect" {
 }
 
 ## CloudFront
-# Creates an Amazon CloudFront origin access identity (will be used in the distribution origin configuration)
-resource "aws_cloudfront_origin_access_identity" "origin_access_identity_website" {
-  comment = "CloudfrontOriginAccessIdentity - ${var.website-domain-main}"
-}
-
 # Creates the CloudFront distribution to serve the static website
 resource "aws_cloudfront_distribution" "website_cdn_root" {
   enabled     = true
@@ -151,10 +146,13 @@ resource "aws_cloudfront_distribution" "website_cdn_root" {
 
   origin {
     origin_id   = "origin-bucket-${aws_s3_bucket.website_root.id}"
-    domain_name = aws_s3_bucket.website_root.bucket_regional_domain_name
+    domain_name = aws_s3_bucket.website_root.website_endpoint
 
-    s3_origin_config {
-      origin_access_identity = aws_cloudfront_origin_access_identity.origin_access_identity_website.cloudfront_access_identity_path
+    custom_origin_config {
+      origin_protocol_policy = "http-only"
+      http_port              = 80
+      https_port             = 443
+      origin_ssl_protocols   = ["TLSv1.2", "TLSv1.1", "TLSv1"]
     }
   }
 
@@ -240,18 +238,15 @@ resource "aws_s3_bucket_policy" "update_website_root_bucket_policy" {
 
   policy = <<POLICY
 {
-  "Version": "2008-10-17",
+  "Version": "2012-10-17",
   "Id": "PolicyForCloudFrontPrivateContent",
   "Statement": [
     {
-      "Sid": "AllowCloudFrontOriginAccess",
+      "Sid": "PublicRead",
       "Effect": "Allow",
-      "Principal": {
-        "AWS": "${aws_cloudfront_origin_access_identity.origin_access_identity_website.iam_arn}"
-      },
+      "Principal": "*",
       "Action": [
-        "s3:GetObject",
-        "s3:ListBucket"
+        "s3:GetObject"
       ],
       "Resource": [
         "${aws_s3_bucket.website_root.arn}/*",
@@ -271,10 +266,13 @@ resource "aws_cloudfront_distribution" "website_cdn_redirect" {
 
   origin {
     origin_id   = "origin-bucket-${aws_s3_bucket.website_redirect.id}"
-    domain_name = aws_s3_bucket.website_redirect.bucket_regional_domain_name
+    domain_name = aws_s3_bucket.website_redirect.website_endpoint
 
-    s3_origin_config {
-      origin_access_identity = aws_cloudfront_origin_access_identity.origin_access_identity_website.cloudfront_access_identity_path
+    custom_origin_config {
+      origin_protocol_policy = "http-only"
+      http_port              = 80
+      https_port             = 443
+      origin_ssl_protocols   = ["TLSv1.2", "TLSv1.1", "TLSv1"]
     }
   }
 
