@@ -232,14 +232,14 @@ resource "aws_route53_record" "website_cdn_root_record" {
 }
 
 
-# Creates policy to limit access to the S3 bucket to CloudFront Origin
+# Creates policy to allow public access to the S3 bucket
 resource "aws_s3_bucket_policy" "update_website_root_bucket_policy" {
   bucket = aws_s3_bucket.website_root.id
 
   policy = <<POLICY
 {
   "Version": "2012-10-17",
-  "Id": "PolicyForCloudFrontPrivateContent",
+  "Id": "PolicyForWebsiteEndpointsPublicContent",
   "Statement": [
     {
       "Sid": "PublicRead",
