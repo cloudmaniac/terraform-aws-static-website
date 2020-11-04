@@ -60,6 +60,10 @@ For that reason, the module includes an aliased provider definition to create su
 |------|-------------|
 | website_cdn_root_id | CloudFront Distribution ID |
 
+## Author
+
+Module written by [@cloudmaniac](https://github.com/cloudmaniac). Module Support: [terraform-aws-static-website](https://github.com/cloudmaniac/terraform-aws-static-website). Contributions and comments are welcomed.
+
 ## Additional Resources
 
 * Blog post describing the thought process behind this: [My Wordpress to Hugo Migration #2 - Hosting](https://cloudmaniac.net/wordpress-to-hugo-migration-2-hosting/)
@@ -67,4 +71,5 @@ For that reason, the module includes an aliased provider definition to create su
 ## Todo
 
 * Tag all ressources
+* Secure S3 buckets
 * Optional enhanced version with Lambda@Edge configuration and S3 endpoint (REST endpoint) used as the origin

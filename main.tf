@@ -89,6 +89,7 @@ resource "aws_s3_bucket" "website_logs" {
 # Creates bucket to store the static website
 resource "aws_s3_bucket" "website_root" {
   bucket = "${var.website-domain-main}-root"
+  acl    = "public-read"
 
   # Comment the following line if you are uncomfortable with Terraform destroying the bucket even if not empty 
   force_destroy = true
@@ -116,6 +117,7 @@ resource "aws_s3_bucket" "website_root" {
 # Creates bucket for the website handling the redirection (if required), e.g. from https://www.example.com to https://example.com
 resource "aws_s3_bucket" "website_redirect" {
   bucket        = "${var.website-domain-main}-redirect"
+  acl           = "public-read"
   force_destroy = true
 
   logging {
@@ -149,7 +151,7 @@ resource "aws_cloudfront_distribution" "website_cdn_root" {
     domain_name = aws_s3_bucket.website_root.website_endpoint
 
     custom_origin_config {
-      origin_protocol_policy = "http-only"
+      origin_protocol_policy = "http-only" # The protocol policy that you want CloudFront to use when fetching objects from the origin server (a.k.a S3 in our situation). HTTP Only is the default setting when the origin is an Amazon S3 static website hosting endpoint, because Amazon S3 doesn’t support HTTPS connections for static website hosting endpoints.
       http_port              = 80
       https_port             = 443
       origin_ssl_protocols   = ["TLSv1.2", "TLSv1.1", "TLSv1"]
@@ -164,8 +166,8 @@ resource "aws_cloudfront_distribution" "website_cdn_root" {
   }
 
   default_cache_behavior {
-    allowed_methods  = ["GET", "HEAD"]
-    cached_methods   = ["GET", "HEAD"]
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD", "OPTIONS"]
     target_origin_id = "origin-bucket-${aws_s3_bucket.website_root.id}"
     min_ttl          = "0"
     default_ttl      = "300"
