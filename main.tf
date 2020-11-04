@@ -3,9 +3,9 @@
 
 # The provider below is required to handle ACM and Lambda in a CloudFront context
 provider "aws" {
-  alias                   = "us-east-1"
-  version                 = "~> 2.0"
-  region                  = "us-east-1"
+  alias   = "us-east-1"
+  version = "~> 2.0"
+  region  = "us-east-1"
 }
 
 ## Route 53
@@ -265,12 +265,12 @@ resource "aws_cloudfront_distribution" "website_cdn_redirect" {
     domain_name = aws_s3_bucket.website_redirect.website_endpoint
 
     custom_origin_config {
-      http_port                = 80
-      https_port               = 443
-      origin_protocol_policy   = "http-only"
-      origin_ssl_protocols     = ["TLSv1", "TLSv1.1", "TLSv1.2"]
-      }
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1", "TLSv1.1", "TLSv1.2"]
     }
+  }
 
   default_root_object = "index.html"
 
