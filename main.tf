@@ -199,6 +199,14 @@ resource "aws_cloudfront_distribution" "website_cdn_root" {
       }
     }
 
+    # An optional AWS Lambda Function for customising CloudFront behaviour.
+    dynamic "lambda_function_association" {
+      for_each = var.cloudfront_lambda_function_arn == null ? [] : [1]
+      content {
+        event_type = var.cloudfront_lambda_function_event_type
+        lambda_arn = var.cloudfront_lambda_function_arn
+      }
+    }
   }
 
   restrictions {
