@@ -22,3 +22,8 @@
 
 # Ignore aws credentials
 .aws/
+*.swp
+
+# Ignore Intellij
+.idea/
+*.iml

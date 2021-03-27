@@ -1,11 +1,12 @@
 ## Providers definition
-# Default provider will be inherited from the enclosing configuration
 
-# The provider below is required to handle ACM and Lambda in a CloudFront context
-provider "aws" {
-  alias   = "us-east-1"
-  version = "~> 2.0"
-  region  = "us-east-1"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 3.34.0"
+    }
+  }
 }
 
 ## Route 53
@@ -18,8 +19,6 @@ data "aws_route53_zone" "main" {
 ## ACM (AWS Certificate Manager)
 # Creates the wildcard certificate *.<yourdomain.com>
 resource "aws_acm_certificate" "wildcard_website" {
-  provider = aws.us-east-1 # Wilcard certificate used by CloudFront requires this specific region (https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cnames-and-https-requirements.html)
-
   domain_name               = var.website-domain-main
   subject_alternative_names = ["*.${var.website-domain-main}"]
   validation_method         = "DNS"
@@ -36,26 +35,30 @@ resource "aws_acm_certificate" "wildcard_website" {
 
 # Validates the ACM wildcard by creating a Route53 record (as `validation_method` is set to `DNS` in the aws_acm_certificate resource)
 resource "aws_route53_record" "wildcard_validation" {
-  name    = aws_acm_certificate.wildcard_website.domain_validation_options[0].resource_record_name
-  type    = aws_acm_certificate.wildcard_website.domain_validation_options[0].resource_record_type
+  for_each = {
+    for dvo in aws_acm_certificate.wildcard_website.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+  name    = each.value.name
+  type    = each.value.type
   zone_id = data.aws_route53_zone.main.zone_id
-  records = [aws_acm_certificate.wildcard_website.domain_validation_options[0].resource_record_value]
+  records = [each.value.record]
+  allow_overwrite = true
   ttl     = "60"
 }
 
 # Triggers the ACM wildcard certificate validation event
 resource "aws_acm_certificate_validation" "wildcard_cert" {
-  provider = aws.us-east-1
-
   certificate_arn         = aws_acm_certificate.wildcard_website.arn
-  validation_record_fqdns = [aws_route53_record.wildcard_validation.fqdn]
+  validation_record_fqdns = [for k,v in aws_route53_record.wildcard_validation: v.fqdn]
 }
 
 
 # Get the ARN of the issued certificate
 data "aws_acm_certificate" "wildcard_website" {
-  provider = aws.us-east-1
-
   depends_on = [
     aws_acm_certificate.wildcard_website,
     aws_route53_record.wildcard_validation,
@@ -73,7 +76,7 @@ resource "aws_s3_bucket" "website_logs" {
   bucket = "${var.website-domain-main}-logs"
   acl    = "log-delivery-write"
 
-  # Comment the following line if you are uncomfortable with Terraform destroying the bucket even if this one is not empty 
+  # Comment the following line if you are uncomfortable with Terraform destroying the bucket even if this one is not empty
   force_destroy = true
 
   tags = {
@@ -91,7 +94,7 @@ resource "aws_s3_bucket" "website_root" {
   bucket = "${var.website-domain-main}-root"
   acl    = "public-read"
 
-  # Comment the following line if you are uncomfortable with Terraform destroying the bucket even if not empty 
+  # Comment the following line if you are uncomfortable with Terraform destroying the bucket even if not empty
   force_destroy = true
 
   logging {
