@@ -42,18 +42,18 @@ resource "aws_route53_record" "wildcard_validation" {
       type   = dvo.resource_record_type
     }
   }
-  name    = each.value.name
-  type    = each.value.type
-  zone_id = data.aws_route53_zone.main.zone_id
-  records = [each.value.record]
+  name            = each.value.name
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.main.zone_id
+  records         = [each.value.record]
   allow_overwrite = true
-  ttl     = "60"
+  ttl             = "60"
 }
 
 # Triggers the ACM wildcard certificate validation event
 resource "aws_acm_certificate_validation" "wildcard_cert" {
   certificate_arn         = aws_acm_certificate.wildcard_website.arn
-  validation_record_fqdns = [for k,v in aws_route53_record.wildcard_validation: v.fqdn]
+  validation_record_fqdns = [for k, v in aws_route53_record.wildcard_validation : v.fqdn]
 }
 
 
