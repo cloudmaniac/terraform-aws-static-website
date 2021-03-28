@@ -23,14 +23,15 @@ resource "aws_acm_certificate" "wildcard_website" {
   subject_alternative_names = ["*.${var.website-domain-main}"]
   validation_method         = "DNS"
 
-  tags = {
+  tags = merge(var.tags, {
     ManagedBy = "terraform"
     Changed   = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
-  }
+  })
 
   lifecycle {
-    ignore_changes = [tags]
+    ignore_changes = [tags["Changed"]]
   }
+
 }
 
 # Validates the ACM wildcard by creating a Route53 record (as `validation_method` is set to `DNS` in the aws_acm_certificate resource)
@@ -79,13 +80,13 @@ resource "aws_s3_bucket" "website_logs" {
   # Comment the following line if you are uncomfortable with Terraform destroying the bucket even if this one is not empty
   force_destroy = true
 
-  tags = {
+  tags = merge(var.tags, {
     ManagedBy = "terraform"
     Changed   = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
-  }
+  })
 
   lifecycle {
-    ignore_changes = [tags]
+    ignore_changes = [tags["Changed"]]
   }
 }
 
@@ -107,13 +108,13 @@ resource "aws_s3_bucket" "website_root" {
     error_document = "404.html"
   }
 
-  tags = {
+  tags = merge(var.tags, {
     ManagedBy = "terraform"
     Changed   = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
-  }
+  })
 
   lifecycle {
-    ignore_changes = [tags]
+    ignore_changes = [tags["Changed"]]
   }
 }
 
@@ -132,13 +133,13 @@ resource "aws_s3_bucket" "website_redirect" {
     redirect_all_requests_to = "https://${var.website-domain-main}"
   }
 
-  tags = {
+  tags = merge(var.tags, {
     ManagedBy = "terraform"
     Changed   = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
-  }
+  })
 
   lifecycle {
-    ignore_changes = [tags]
+    ignore_changes = [tags["Changed"]]
   }
 }
 
@@ -206,14 +207,14 @@ resource "aws_cloudfront_distribution" "website_cdn_root" {
     response_code         = 404
   }
 
-  tags = {
+  tags = merge(var.tags, {
     ManagedBy = "terraform"
     Changed   = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
-  }
+  })
 
   lifecycle {
     ignore_changes = [
-      tags,
+      tags["Changed"],
       viewer_certificate,
     ]
   }
@@ -314,14 +315,14 @@ resource "aws_cloudfront_distribution" "website_cdn_redirect" {
     ssl_support_method  = "sni-only"
   }
 
-  tags = {
+  tags = merge(var.tags, {
     ManagedBy = "terraform"
     Changed   = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
-  }
+  })
 
   lifecycle {
     ignore_changes = [
-      tags,
+      tags["Changed"],
       viewer_certificate,
     ]
   }

@@ -8,3 +8,9 @@ variable "website-domain-redirect" {
   default     = null
   type        = string
 }
+
+variable "tags" {
+  description = "Tags added to resources"
+  default     = {}
+  type        = map(string)
+}
