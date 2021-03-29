@@ -291,8 +291,6 @@ resource "aws_cloudfront_distribution" "website_cdn_redirect" {
     }
   }
 
-  default_root_object = "index.html"
-
   logging_config {
     bucket = aws_s3_bucket.website_logs.bucket_domain_name
     prefix = "${var.website-domain-redirect}/"
