@@ -80,6 +80,7 @@ resource "aws_s3_bucket" "website_logs" {
   # Comment the following line if you are uncomfortable with Terraform destroying the bucket even if this one is not empty
   force_destroy = true
 
+
   tags = merge(var.tags, {
     ManagedBy = "terraform"
     Changed   = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
@@ -147,18 +148,20 @@ resource "aws_s3_bucket" "website_redirect" {
 # Creates the CloudFront distribution to serve the static website
 resource "aws_cloudfront_distribution" "website_cdn_root" {
   enabled     = true
-  price_class = "PriceClass_All" # Select the correct PriceClass depending on who the CDN is supposed to serve (https://docs.aws.amazon.com/AmazonCloudFront/ladev/DeveloperGuide/PriceClass.html)
-  aliases     = [var.website-domain-main]
+  price_class = "PriceClass_All"
+  # Select the correct PriceClass depending on who the CDN is supposed to serve (https://docs.aws.amazon.com/AmazonCloudFront/ladev/DeveloperGuide/PriceClass.html)
+  aliases = [var.website-domain-main]
 
   origin {
     origin_id   = "origin-bucket-${aws_s3_bucket.website_root.id}"
     domain_name = aws_s3_bucket.website_root.website_endpoint
 
     custom_origin_config {
-      origin_protocol_policy = "http-only" # The protocol policy that you want CloudFront to use when fetching objects from the origin server (a.k.a S3 in our situation). HTTP Only is the default setting when the origin is an Amazon S3 static website hosting endpoint, because Amazon S3 doesn’t support HTTPS connections for static website hosting endpoints.
-      http_port              = 80
-      https_port             = 443
-      origin_ssl_protocols   = ["TLSv1.2", "TLSv1.1", "TLSv1"]
+      origin_protocol_policy = "http-only"
+      # The protocol policy that you want CloudFront to use when fetching objects from the origin server (a.k.a S3 in our situation). HTTP Only is the default setting when the origin is an Amazon S3 static website hosting endpoint, because Amazon S3 doesn’t support HTTPS connections for static website hosting endpoints.
+      http_port            = 80
+      https_port           = 443
+      origin_ssl_protocols = ["TLSv1.2", "TLSv1.1", "TLSv1"]
     }
   }
 
@@ -260,11 +263,53 @@ resource "aws_s3_bucket_policy" "update_website_root_bucket_policy" {
 POLICY
 }
 
+locals {
+  s3_buckets = toset([
+    aws_s3_bucket.website_root.bucket,
+    aws_s3_bucket.website_redirect.bucket,
+    aws_s3_bucket.website_logs.bucket
+  ])
+}
+
+data "aws_iam_policy_document" "deny_non_ssl_access" {
+  for_each = local.s3_buckets
+  # Force SSL access only
+  statement {
+    sid = "ForceSSLOnlyAccess"
+
+    effect = "Deny"
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    actions = ["s3:*"]
+
+    resources = [
+      "arn:aws:s3:::${each.value}",
+    "arn:aws:s3:::${each.value}/*"]
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "deny_non_ssl_access" {
+  for_each = local.s3_buckets
+  bucket   = each.value
+  policy   = data.aws_iam_policy_document.deny_non_ssl_access[each.value].json
+}
+
 # Creates the CloudFront distribution to serve the redirection website (if redirection is required)
 resource "aws_cloudfront_distribution" "website_cdn_redirect" {
   enabled     = true
-  price_class = "PriceClass_All" # Select the correct PriceClass depending on who the CDN is supposed to serve (https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/PriceClass.html)
-  aliases     = [var.website-domain-redirect]
+  price_class = "PriceClass_All"
+  # Select the correct PriceClass depending on who the CDN is supposed to serve (https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/PriceClass.html)
+  aliases = [var.website-domain-redirect]
 
   origin {
     origin_id   = "origin-bucket-${aws_s3_bucket.website_redirect.id}"
