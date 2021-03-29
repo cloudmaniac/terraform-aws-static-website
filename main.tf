@@ -272,47 +272,6 @@ resource "aws_s3_bucket_policy" "update_website_root_bucket_policy" {
 POLICY
 }
 
-locals {
-  s3_buckets = toset([
-    aws_s3_bucket.website_root.bucket,
-    aws_s3_bucket.website_redirect.bucket,
-    aws_s3_bucket.website_logs.bucket
-  ])
-}
-
-data "aws_iam_policy_document" "deny_non_ssl_access" {
-  for_each = local.s3_buckets
-  # Force SSL access only
-  statement {
-    sid = "ForceSSLOnlyAccess"
-
-    effect = "Deny"
-
-    principals {
-      type        = "AWS"
-      identifiers = ["*"]
-    }
-
-    actions = ["s3:*"]
-
-    resources = [
-      "arn:aws:s3:::${each.value}",
-    "arn:aws:s3:::${each.value}/*"]
-
-    condition {
-      test     = "Bool"
-      variable = "aws:SecureTransport"
-      values   = ["false"]
-    }
-  }
-}
-
-resource "aws_s3_bucket_policy" "deny_non_ssl_access" {
-  for_each = local.s3_buckets
-  bucket   = each.value
-  policy   = data.aws_iam_policy_document.deny_non_ssl_access[each.value].json
-}
-
 # Creates the CloudFront distribution to serve the redirection website (if redirection is required)
 resource "aws_cloudfront_distribution" "website_cdn_redirect" {
   enabled     = true
