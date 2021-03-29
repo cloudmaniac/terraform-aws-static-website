@@ -1,11 +1,12 @@
 ## Providers definition
-# Default provider will be inherited from the enclosing configuration
 
-# The provider below is required to handle ACM and Lambda in a CloudFront context
-provider "aws" {
-  alias   = "us-east-1"
-  version = "~> 2.0"
-  region  = "us-east-1"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 3.34.0"
+    }
+  }
 }
 
 ## Route 53
@@ -18,44 +19,47 @@ data "aws_route53_zone" "main" {
 ## ACM (AWS Certificate Manager)
 # Creates the wildcard certificate *.<yourdomain.com>
 resource "aws_acm_certificate" "wildcard_website" {
-  provider = aws.us-east-1 # Wilcard certificate used by CloudFront requires this specific region (https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cnames-and-https-requirements.html)
-
   domain_name               = var.website-domain-main
   subject_alternative_names = ["*.${var.website-domain-main}"]
   validation_method         = "DNS"
 
-  tags = {
+  tags = merge(var.tags, {
     ManagedBy = "terraform"
     Changed   = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
-  }
+  })
 
   lifecycle {
-    ignore_changes = [tags]
+    ignore_changes = [tags["Changed"]]
   }
+
 }
 
 # Validates the ACM wildcard by creating a Route53 record (as `validation_method` is set to `DNS` in the aws_acm_certificate resource)
 resource "aws_route53_record" "wildcard_validation" {
-  name    = aws_acm_certificate.wildcard_website.domain_validation_options[0].resource_record_name
-  type    = aws_acm_certificate.wildcard_website.domain_validation_options[0].resource_record_type
-  zone_id = data.aws_route53_zone.main.zone_id
-  records = [aws_acm_certificate.wildcard_website.domain_validation_options[0].resource_record_value]
-  ttl     = "60"
+  for_each = {
+    for dvo in aws_acm_certificate.wildcard_website.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+  name            = each.value.name
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.main.zone_id
+  records         = [each.value.record]
+  allow_overwrite = true
+  ttl             = "60"
 }
 
 # Triggers the ACM wildcard certificate validation event
 resource "aws_acm_certificate_validation" "wildcard_cert" {
-  provider = aws.us-east-1
-
   certificate_arn         = aws_acm_certificate.wildcard_website.arn
-  validation_record_fqdns = [aws_route53_record.wildcard_validation.fqdn]
+  validation_record_fqdns = [for k, v in aws_route53_record.wildcard_validation : v.fqdn]
 }
 
 
 # Get the ARN of the issued certificate
 data "aws_acm_certificate" "wildcard_website" {
-  provider = aws.us-east-1
-
   depends_on = [
     aws_acm_certificate.wildcard_website,
     aws_route53_record.wildcard_validation,
@@ -73,16 +77,17 @@ resource "aws_s3_bucket" "website_logs" {
   bucket = "${var.website-domain-main}-logs"
   acl    = "log-delivery-write"
 
-  # Comment the following line if you are uncomfortable with Terraform destroying the bucket even if this one is not empty 
+  # Comment the following line if you are uncomfortable with Terraform destroying the bucket even if this one is not empty
   force_destroy = true
 
-  tags = {
+
+  tags = merge(var.tags, {
     ManagedBy = "terraform"
     Changed   = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
-  }
+  })
 
   lifecycle {
-    ignore_changes = [tags]
+    ignore_changes = [tags["Changed"]]
   }
 }
 
@@ -91,7 +96,7 @@ resource "aws_s3_bucket" "website_root" {
   bucket = "${var.website-domain-main}-root"
   acl    = "public-read"
 
-  # Comment the following line if you are uncomfortable with Terraform destroying the bucket even if not empty 
+  # Comment the following line if you are uncomfortable with Terraform destroying the bucket even if not empty
   force_destroy = true
 
   logging {
@@ -104,13 +109,13 @@ resource "aws_s3_bucket" "website_root" {
     error_document = "404.html"
   }
 
-  tags = {
+  tags = merge(var.tags, {
     ManagedBy = "terraform"
     Changed   = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
-  }
+  })
 
   lifecycle {
-    ignore_changes = [tags]
+    ignore_changes = [tags["Changed"]]
   }
 }
 
@@ -129,13 +134,13 @@ resource "aws_s3_bucket" "website_redirect" {
     redirect_all_requests_to = "https://${var.website-domain-main}"
   }
 
-  tags = {
+  tags = merge(var.tags, {
     ManagedBy = "terraform"
     Changed   = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
-  }
+  })
 
   lifecycle {
-    ignore_changes = [tags]
+    ignore_changes = [tags["Changed"]]
   }
 }
 
@@ -143,18 +148,20 @@ resource "aws_s3_bucket" "website_redirect" {
 # Creates the CloudFront distribution to serve the static website
 resource "aws_cloudfront_distribution" "website_cdn_root" {
   enabled     = true
-  price_class = "PriceClass_All" # Select the correct PriceClass depending on who the CDN is supposed to serve (https://docs.aws.amazon.com/AmazonCloudFront/ladev/DeveloperGuide/PriceClass.html)
-  aliases     = [var.website-domain-main]
+  price_class = "PriceClass_All"
+  # Select the correct PriceClass depending on who the CDN is supposed to serve (https://docs.aws.amazon.com/AmazonCloudFront/ladev/DeveloperGuide/PriceClass.html)
+  aliases = [var.website-domain-main]
 
   origin {
     origin_id   = "origin-bucket-${aws_s3_bucket.website_root.id}"
     domain_name = aws_s3_bucket.website_root.website_endpoint
 
     custom_origin_config {
-      origin_protocol_policy = "http-only" # The protocol policy that you want CloudFront to use when fetching objects from the origin server (a.k.a S3 in our situation). HTTP Only is the default setting when the origin is an Amazon S3 static website hosting endpoint, because Amazon S3 doesn’t support HTTPS connections for static website hosting endpoints.
-      http_port              = 80
-      https_port             = 443
-      origin_ssl_protocols   = ["TLSv1.2", "TLSv1.1", "TLSv1"]
+      origin_protocol_policy = "http-only"
+      # The protocol policy that you want CloudFront to use when fetching objects from the origin server (a.k.a S3 in our situation). HTTP Only is the default setting when the origin is an Amazon S3 static website hosting endpoint, because Amazon S3 doesn’t support HTTPS connections for static website hosting endpoints.
+      http_port            = 80
+      https_port           = 443
+      origin_ssl_protocols = ["TLSv1.2", "TLSv1.1", "TLSv1"]
     }
   }
 
@@ -203,14 +210,14 @@ resource "aws_cloudfront_distribution" "website_cdn_root" {
     response_code         = 404
   }
 
-  tags = {
+  tags = merge(var.tags, {
     ManagedBy = "terraform"
     Changed   = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
-  }
+  })
 
   lifecycle {
     ignore_changes = [
-      tags,
+      tags["Changed"],
       viewer_certificate,
     ]
   }
@@ -256,11 +263,53 @@ resource "aws_s3_bucket_policy" "update_website_root_bucket_policy" {
 POLICY
 }
 
+locals {
+  s3_buckets = toset([
+    aws_s3_bucket.website_root.bucket,
+    aws_s3_bucket.website_redirect.bucket,
+    aws_s3_bucket.website_logs.bucket
+  ])
+}
+
+data "aws_iam_policy_document" "deny_non_ssl_access" {
+  for_each = local.s3_buckets
+  # Force SSL access only
+  statement {
+    sid = "ForceSSLOnlyAccess"
+
+    effect = "Deny"
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    actions = ["s3:*"]
+
+    resources = [
+      "arn:aws:s3:::${each.value}",
+    "arn:aws:s3:::${each.value}/*"]
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "deny_non_ssl_access" {
+  for_each = local.s3_buckets
+  bucket   = each.value
+  policy   = data.aws_iam_policy_document.deny_non_ssl_access[each.value].json
+}
+
 # Creates the CloudFront distribution to serve the redirection website (if redirection is required)
 resource "aws_cloudfront_distribution" "website_cdn_redirect" {
   enabled     = true
-  price_class = "PriceClass_All" # Select the correct PriceClass depending on who the CDN is supposed to serve (https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/PriceClass.html)
-  aliases     = [var.website-domain-redirect]
+  price_class = "PriceClass_All"
+  # Select the correct PriceClass depending on who the CDN is supposed to serve (https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/PriceClass.html)
+  aliases = [var.website-domain-redirect]
 
   origin {
     origin_id   = "origin-bucket-${aws_s3_bucket.website_redirect.id}"
@@ -311,14 +360,14 @@ resource "aws_cloudfront_distribution" "website_cdn_redirect" {
     ssl_support_method  = "sni-only"
   }
 
-  tags = {
+  tags = merge(var.tags, {
     ManagedBy = "terraform"
     Changed   = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
-  }
+  })
 
   lifecycle {
     ignore_changes = [
-      tags,
+      tags["Changed"],
       viewer_certificate,
     ]
   }
