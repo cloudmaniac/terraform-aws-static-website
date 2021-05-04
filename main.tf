@@ -17,7 +17,7 @@ provider "aws" {
 ## Route 53
 # Provides details about the zone
 data "aws_route53_zone" "main" {
-  name         = var.website-domain-main
+  name         = var.domains-zone-root
   private_zone = false
 }
 
@@ -351,3 +351,4 @@ resource "aws_route53_record" "website_cdn_redirect_record" {
     evaluate_target_health = false
   }
 }
+

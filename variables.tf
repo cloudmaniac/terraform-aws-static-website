@@ -9,8 +9,15 @@ variable "website-domain-redirect" {
   type        = string
 }
 
+variable "domains-zone-root" {
+  description = "root zone under which the domains should be registered"
+  type        = string
+  default     = null
+}
+
 variable "tags" {
   description = "Tags added to resources"
   default     = {}
   type        = map(string)
 }
+
