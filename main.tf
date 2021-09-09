@@ -115,7 +115,7 @@ resource "aws_s3_bucket" "website_root" {
 
   website {
     index_document = "index.html"
-    error_document = "404.html"
+    error_document = var.support-spa ? "" : "404.html"
   }
 
   tags = merge(var.tags, {
@@ -294,6 +294,14 @@ resource "aws_cloudfront_distribution" "website_cdn_redirect" {
   logging_config {
     bucket = aws_s3_bucket.website_logs.bucket_domain_name
     prefix = "${var.website-domain-redirect}/"
+  }
+  dynamic "custom_error_response" {
+    for_each = var.support-spa ? [{"key" = "value"}] : []
+    content {
+      error_code = 404
+      response_code = 200
+      response_page_path = "/index.html"
+    }
   }
 
   default_cache_behavior {
