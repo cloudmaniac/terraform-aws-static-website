@@ -215,8 +215,8 @@ resource "aws_cloudfront_distribution" "website_cdn_root" {
   custom_error_response {
     error_caching_min_ttl = 300
     error_code            = 404
-    response_page_path    = "/404.html"
-    response_code         = 404
+    response_page_path    = var.support-spa ? "/index.html" : "/404.html"
+    response_code         = var.support-spa ? 200 : 404
   }
 
   tags = merge(var.tags, {
@@ -294,14 +294,6 @@ resource "aws_cloudfront_distribution" "website_cdn_redirect" {
   logging_config {
     bucket = aws_s3_bucket.website_logs.bucket_domain_name
     prefix = "${var.website-domain-redirect}/"
-  }
-  dynamic "custom_error_response" {
-    for_each = var.support-spa ? [{"key" = "value"}] : []
-    content {
-      error_code = 404
-      response_code = 200
-      response_page_path = "/index.html"
-    }
   }
 
   default_cache_behavior {
