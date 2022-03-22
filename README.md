@@ -53,6 +53,7 @@ For that reason, the module includes an aliased provider definition to create su
 |------|-------------|:----:|:-------:|:--------:|
 | website-domain-main | Domain for the website (e.g., `example.com`) | string | - | yes |
 | website-domain-redirect | Alternate subdomain to redirect to the main website (e.g., `www.example.com`) | string | - | yes |
+| support-spa | Determine if website is SPA to direct 404 response to index.html | bool | false | no |
 
 ## Outputs
 
