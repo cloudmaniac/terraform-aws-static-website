@@ -3,6 +3,12 @@ variable "website-domain-main" {
   type        = string
 }
 
+variable "website-additional-domains" {
+  description = "Main website additional domains domain, e.g. additional.cloudmaniac.net"
+  type        = list(string)
+  default = []
+}
+
 variable "website-domain-redirect" {
   description = "Secondary FQDN that will redirect to the main URL, e.g. www.cloudmaniac.net"
   default     = null
