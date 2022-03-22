@@ -24,5 +24,5 @@ variable "tags" {
 variable "support-spa" {
   description = "Support SPA website with redirect to index.html"
   default = false
-  type = string
+  type = bool
 }
