@@ -21,7 +21,7 @@ This Terraform module creates the following AWS resources:
 ## Requirements
 
 * This module is meant for use with [Terraform](https://www.terraform.io/downloads.html) 0.12+. It has not been tested with previous versions of Terraform.
-* An AWS account and your credentials (`aws_access_key_id` and `aws_secret_access_key`) configured. There are several ways to do this (environment variables, shared credentials file, etc.): my preference is to store them in a [credential file](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html). More information in the [AWS Provider](https://www.terraform.io/docs/providers/aws/index.html) documentation.
+* An AWS account and your credentials (`aws_access_key_id` and `aws_secret_access_key`) configured. There are several ways to do this (environment variables, shared credentials file, etc.); more information in the [AWS Provider](https://www.terraform.io/docs/providers/aws/index.html) documentation.
 * Your domain already configured as a hosted zone on Route53.
 
 ## Usage
@@ -62,7 +62,9 @@ For that reason, the module includes an aliased provider definition to create su
 
 ## Author
 
-Module written by [@cloudmaniac](https://github.com/cloudmaniac). Module Support: [terraform-aws-static-website](https://github.com/cloudmaniac/terraform-aws-static-website). Contributions and comments are welcomed.
+Module written by [@cloudmaniac](https://github.com/cloudmaniac).
+
+Module Support: [terraform-aws-static-website](https://github.com/cloudmaniac/terraform-aws-static-website). Contributions and comments are welcomed.
 
 ## Additional Resources
 
