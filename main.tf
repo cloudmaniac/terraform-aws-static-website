@@ -26,7 +26,7 @@ data "aws_route53_zone" "main" {
 resource "aws_acm_certificate" "wildcard_website" {
   provider                  = aws.us-east-1
   domain_name               = var.website-domain-main
-  subject_alternative_names = ["*.${var.website-domain-main}"]
+  subject_alternative_names = ["*.${var.domains-zone-root}"]
   validation_method         = "DNS"
 
   tags = merge(var.tags, {
@@ -159,7 +159,7 @@ resource "aws_cloudfront_distribution" "website_cdn_root" {
   enabled     = true
   price_class = "PriceClass_All"
   # Select the correct PriceClass depending on who the CDN is supposed to serve (https://docs.aws.amazon.com/AmazonCloudFront/ladev/DeveloperGuide/PriceClass.html)
-  aliases = [var.website-domain-main]
+  aliases = concat([var.website-domain-main], var.website-additional-domains)
 
   origin {
     origin_id   = "origin-bucket-${aws_s3_bucket.website_root.id}"

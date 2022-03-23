@@ -54,6 +54,7 @@ For that reason, the module includes an aliased provider definition to create su
 | website-domain-main | Domain for the website (e.g., `example.com`) | string | - | yes |
 | website-domain-redirect | Alternate subdomain to redirect to the main website (e.g., `www.example.com`) | string | - | yes |
 | support-spa | Determine if website is SPA (Single-Page Application) to direct 404 response to index.html | bool | false | no |
+| website-additional-domains | Additional domains | list(string) | [] | no |
 
 ## Outputs
 
@@ -63,7 +64,9 @@ For that reason, the module includes an aliased provider definition to create su
 
 ## Author
 
-Module written by [@cloudmaniac](https://github.com/cloudmaniac). Module Support: [terraform-aws-static-website](https://github.com/cloudmaniac/terraform-aws-static-website). Contributions and comments are welcomed.
+Module written by [@cloudmaniac](https://github.com/cloudmaniac).
+
+Module Support: [terraform-aws-static-website](https://github.com/cloudmaniac/terraform-aws-static-website). Contributions and comments are welcomed.
 
 ## Additional Resources
 
