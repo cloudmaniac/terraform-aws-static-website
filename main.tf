@@ -17,7 +17,7 @@ provider "aws" {
 ## Route 53
 # Provides details about the zone
 data "aws_route53_zone" "main" {
-  name         = var.website-domain-main
+  name         = var.domains-zone-root
   private_zone = false
 }
 
@@ -26,7 +26,7 @@ data "aws_route53_zone" "main" {
 resource "aws_acm_certificate" "wildcard_website" {
   provider                  = aws.us-east-1
   domain_name               = var.website-domain-main
-  subject_alternative_names = ["*.${var.website-domain-main}"]
+  subject_alternative_names = ["*.${var.domains-zone-root}"]
   validation_method         = "DNS"
 
   tags = merge(var.tags, {
@@ -115,7 +115,7 @@ resource "aws_s3_bucket" "website_root" {
 
   website {
     index_document = "index.html"
-    error_document = "404.html"
+    error_document = var.support-spa ? "" : "404.html"
   }
 
   tags = merge(var.tags, {
@@ -159,7 +159,7 @@ resource "aws_cloudfront_distribution" "website_cdn_root" {
   enabled     = true
   price_class = "PriceClass_All"
   # Select the correct PriceClass depending on who the CDN is supposed to serve (https://docs.aws.amazon.com/AmazonCloudFront/ladev/DeveloperGuide/PriceClass.html)
-  aliases = [var.website-domain-main]
+  aliases = concat([var.website-domain-main], var.website-additional-domains)
 
   origin {
     origin_id   = "origin-bucket-${aws_s3_bucket.website_root.id}"
@@ -223,8 +223,8 @@ resource "aws_cloudfront_distribution" "website_cdn_root" {
   custom_error_response {
     error_caching_min_ttl = 300
     error_code            = 404
-    response_page_path    = "/404.html"
-    response_code         = 404
+    response_page_path    = var.support-spa ? "/index.html" : "/404.html"
+    response_code         = var.support-spa ? 200 : 404
   }
 
   tags = merge(var.tags, {
@@ -301,7 +301,7 @@ resource "aws_cloudfront_distribution" "website_cdn_redirect" {
 
   logging_config {
     bucket = aws_s3_bucket.website_logs.bucket_domain_name
-    prefix = "${var.website-domain-redirect}/"
+    prefix = "${var.website-domain-main}-redirect/"
   }
 
   default_cache_behavior {
@@ -359,3 +359,4 @@ resource "aws_route53_record" "website_cdn_redirect_record" {
     evaluate_target_health = false
   }
 }
+
