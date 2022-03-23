@@ -25,7 +25,7 @@ data "aws_route53_zone" "main" {
 # Creates the wildcard certificate *.<yourdomain.com>
 resource "aws_acm_certificate" "wildcard_website" {
   provider                  = aws.us-east-1
-  domain_name               = var.website-domain-main
+  domain_name               = var.domains-zone-root
   subject_alternative_names = ["*.${var.domains-zone-root}"]
   validation_method         = "DNS"
 
