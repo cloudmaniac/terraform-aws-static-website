@@ -3,7 +3,7 @@
 [![GitHub][github-image]][github-link]
 
   [github-image]: https://img.shields.io/github/release/realglobe-Inc/terraform-aws-static-website.svg
-  [github-link]: https://github.com/realglobe-Inc/terraform-aws-static-website/releases
+  [github-link]: https://github.com/cloudmaniac/terraform-aws-static-website/releases
 
 Terraform module which provision required AWS resources to host a performant and secured static website.
 
