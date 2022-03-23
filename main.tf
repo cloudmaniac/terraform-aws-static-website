@@ -17,7 +17,7 @@ provider "aws" {
 ## Route 53
 # Provides details about the zone
 data "aws_route53_zone" "main" {
-  name         = var.website-domain-main
+  name         = var.domains-zone-root
   private_zone = false
 }
 
@@ -115,7 +115,7 @@ resource "aws_s3_bucket" "website_root" {
 
   website {
     index_document = "index.html"
-    error_document = "404.html"
+    error_document = var.support-spa ? "" : "404.html"
   }
 
   tags = merge(var.tags, {
@@ -215,8 +215,8 @@ resource "aws_cloudfront_distribution" "website_cdn_root" {
   custom_error_response {
     error_caching_min_ttl = 300
     error_code            = 404
-    response_page_path    = "/404.html"
-    response_code         = 404
+    response_page_path    = var.support-spa ? "/index.html" : "/404.html"
+    response_code         = var.support-spa ? 200 : 404
   }
 
   tags = merge(var.tags, {
@@ -351,3 +351,4 @@ resource "aws_route53_record" "website_cdn_redirect_record" {
     evaluate_target_health = false
   }
 }
+
