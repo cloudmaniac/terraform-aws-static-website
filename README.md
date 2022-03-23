@@ -1,6 +1,9 @@
 # AWS Static Website Terraform Module
 
-![Terraform Version](https://img.shields.io/badge/tf-%3E%3D0.12.0-blue.svg) [![MIT Licensed](https://img.shields.io/badge/license-MIT-green.svg)](https://tldrlegal.com/license/mit-license)
+[![GitHub][github-image]][github-link]
+
+  [github-image]: https://img.shields.io/github/release/realglobe-Inc/terraform-aws-static-website.svg
+  [github-link]: https://github.com/realglobe-Inc/terraform-aws-static-website/releases
 
 Terraform module which provision required AWS resources to host a performant and secured static website.
 
@@ -28,7 +31,6 @@ This Terraform module creates the following AWS resources:
 
 ```HCL
 provider "aws" {
-  version                 = "~> 2.0"
   region                  = "eu-west-3"
   shared_credentials_file = "~/.aws/credentials"
 }
@@ -53,8 +55,10 @@ For that reason, the module includes an aliased provider definition to create su
 |------|-------------|:----:|:-------:|:--------:|
 | website-domain-main | Domain for the website (e.g., `example.com`) | string | - | yes |
 | website-domain-redirect | Alternate subdomain to redirect to the main website (e.g., `www.example.com`) | string | - | yes |
-| support-spa | Determine if website is SPA (Single-Page Application) to direct 404 response to index.html | bool | false | no |
+| support-spa | Determine if website is SPA (Single-Page Application) to direct 404 response to index.html | bool | `false` | no |
 | website-additional-domains | Additional domains | list(string) | [] | no |
+| cloudfront_lambda_function_arn | ARN of optional AWS Lambda Function that can be associated with the CloudFront distribution to provide custom behaviour | string | - | no |
+| cloudfront_lambda_function_event_type | The type of event that triggers the above Lambda Function ([https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution#lambda_function_association](documentation)) | string | `origin-request` | no |
 
 ## Outputs
 
@@ -74,6 +78,8 @@ Module Support: [terraform-aws-static-website](https://github.com/cloudmaniac/te
 
 ## Todo
 
-* Tag all ressources
-* Secure S3 buckets
-* Optional enhanced version with Lambda@Edge configuration and S3 endpoint (REST endpoint) used as the origin
+* [ ] Tag all ressources
+* [ ] Use versioning on S3 buckets instead of invalidation
+* [ ] Secure S3 buckets
+* [ ] Optional enhanced version with Lambda@Edge configuration and S3 endpoint (REST endpoint) used as the origin
+* [ ] Add more outputs
