@@ -38,6 +38,7 @@ provider "aws" {
 module "aws_static_website" {
   source = "cloudmaniac/static-website/aws"
 
+  domains-zone-root       = "example.com"
   website-domain-main     = "example.com"
   website-domain-redirect = "www.example.com"
 }
@@ -53,12 +54,13 @@ For that reason, the module includes an aliased provider definition to create su
 
 | Name | Description | Type | Default | Required |
 |------|-------------|:----:|:-------:|:--------:|
+| domains-zone-root | Root zone under which the domain should be registered in Route 53 | string | - | yes |
 | website-domain-main | Domain for the website (e.g., `example.com`) | string | - | yes |
 | website-domain-redirect | Alternate subdomain to redirect to the main website (e.g., `www.example.com`) | string | - | yes |
 | support-spa | Determine if website is SPA (Single-Page Application) to direct 404 response to index.html | bool | `false` | no |
-| website-additional-domains | Additional domains | list(string) | [] | no |
+| website-additional-domains | Main website additional domains (e.g., `noredir.example.com`) that don't need redirection | list(string) | [] | no |
 | cloudfront_lambda_function_arn | ARN of optional AWS Lambda Function that can be associated with the CloudFront distribution to provide custom behaviour | string | - | no |
-| cloudfront_lambda_function_event_type | The type of event that triggers the above Lambda Function ([https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution#lambda_function_association](documentation)) | string | `origin-request` | no |
+| cloudfront_lambda_function_event_type | The type of event that triggers the above Lambda Function ([documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution#lambda_function_association)) | string | `origin-request` | no |
 
 ## Outputs
 
