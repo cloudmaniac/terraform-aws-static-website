@@ -33,9 +33,13 @@ provider "aws" {
 module "aws_static_website" {
   source = "cloudmaniac/static-website/aws"
 
-  domains-zone-root       = "example.com"
-  website-domain-main     = "example.com"
-  website-domain-redirect = "www.example.com"
+  # This is the domain as defined in Route53
+  domains-zone-root       = "cloudmaniac.net"
+
+  # Domains used for CloudFront
+  website-domain-main     = "cloudmaniac.net"
+  website-domain-redirect = "www.cloudmaniac.net"
+  website-additional-domains = ["noredir1.cloudmaniac.net","noredir2.cloudmaniac.net"]
 }
 ```
 
@@ -75,8 +79,8 @@ Module Support: [terraform-aws-static-website](https://github.com/cloudmaniac/te
 
 ## Todo
 
-* [ ] Tag all ressources
 * [ ] Use versioning on S3 buckets instead of invalidation
 * [ ] Secure S3 buckets
 * [ ] Optional enhanced version with Lambda@Edge configuration and S3 endpoint (REST endpoint) used as the origin
+* [ ] Variable names cleaning
 * [ ] Add more outputs
